@@ -1,0 +1,8 @@
+{
+  "name": "سامانه هوشمند برآورد هزینه و صدور قرارداد آموزشی",
+  "description": "یک ابزار تعاملی و دقیق برای محاسبه هزینه‌های دوره‌های فنی و حرفه‌ای بر اساس خوشه‌ها، ساعات استاندارد و کدهای تخصصی به زبان فارسی.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
