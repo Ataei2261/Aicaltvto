@@ -10,7 +10,7 @@ import { Step1Inputs } from './components/Step1Inputs';
 import { Table1Section } from './components/Table1Section';
 import { SummarySection } from './components/SummarySection';
 import { toPersianDigits, formatRial } from './utils/numberUtils';
-import { Calculator } from 'lucide-react';
+import { Calculator, Phone } from 'lucide-react';
 
 export default function App() {
   // 1. Initial State Definitions
@@ -178,6 +178,10 @@ export default function App() {
             </p>
             <p className="font-medium text-slate-200">
               طراح و توسعه‌دهنده: محمد عطایی محمدی
+            </p>
+            <p className="font-medium text-slate-300 flex items-center justify-center gap-1.5" dir="ltr">
+              <Phone className="w-3.5 h-3.5 text-blue-400" />
+              <span>09112790490</span>
             </p>
             <p className="font-semibold text-slate-450">
               منطبق با آخرین ضوابط و تعرفه‌های مصوب سال ۱۴۰۵
