@@ -35,8 +35,12 @@ export function formatDecimal(value: number, decimals: number = 2): string {
 
 export const formatToFarsi = (num: number | string | null | undefined): string => {
   if (num === null || num === undefined) return "-";
-  const parsed = typeof num === 'string' ? parseFloat(num) : num;
-  if (isNaN(parsed)) return "-";
+  const numStr = String(num);
+  const parsed = parseFloat(numStr);
+  if (isNaN(parsed)) {
+    // Non-numeric text (like "مرحله 5"), convert any digits to Persian and wrap in LTR marks
+    return '\u200E' + toPersianDigits(numStr) + '\u200E';
+  }
   
   // 1. Convert to string using standard Farsi locale
   let persianStr = Number(parsed).toLocaleString('fa-IR');

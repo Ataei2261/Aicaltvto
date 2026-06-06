@@ -58,6 +58,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
     mojri_address: '',
     mojri_phone: '',
     center_name: '',
+    level: '',
     boss_name: '',
     course_count: '۱',
     course_name: '',
@@ -185,10 +186,16 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
       const totalRegConsultAll = totalRegConsultPerPerson * parsedStudentCount;
       const totalCertFee = certificateIssuanceCost * parsedStudentCount;
 
+      let levelOutput = "";
+      if (contractForm.level && contractForm.level.trim() !== "") {
+        levelOutput = `مرحله ${contractForm.level}`;
+      }
+
       const docData: Record<string, any> = {
         // Form textual strings
         mojri_name: contractForm.mojri_name,
         center_name: contractForm.center_name,
+        level: levelOutput !== "" ? formatToFarsi(levelOutput) : "",
         boss_name: contractForm.boss_name,
         mojri_rep: contractForm.mojri_rep,
         mojri_title: contractForm.mojri_title,
@@ -430,6 +437,27 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                       placeholder="مثال: برادران گرگان"
                       className={`w-full p-2.5 bg-slate-50 border ${validationErrors.center_name ? 'border-red-500 ring-2 ring-red-105' : 'border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100'} rounded-lg text-xs font-semibold text-slate-800 outline-none transition-all`}
                     />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-xs font-bold text-slate-600">مرحله (اختیاری)</label>
+                    <select
+                      value={contractForm.level}
+                      onChange={(e) => handleInputChange('level', e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all cursor-pointer"
+                    >
+                      <option value="">انتخاب کنید...</option>
+                      <option value="1">۱</option>
+                      <option value="2">۲</option>
+                      <option value="3">۳</option>
+                      <option value="4">۴</option>
+                      <option value="5">۵</option>
+                      <option value="6">۶</option>
+                      <option value="7">۷</option>
+                      <option value="8">۸</option>
+                      <option value="9">۹</option>
+                      <option value="10">۱۰</option>
+                    </select>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
