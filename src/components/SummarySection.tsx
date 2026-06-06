@@ -5,7 +5,7 @@
 
 import React, { useState } from 'react';
 import { formatRial, toPersianDigits, formatDecimal, formatToFarsi, formatDateForWord } from '../utils/numberUtils';
-import { FileText, Printer, ShieldCheck, CheckCircle, Info, Loader2, X, FileSignature, AlertCircle, Trash2 } from 'lucide-react';
+import { FileText, ShieldCheck, CheckCircle, Info, Loader2, X, FileSignature, AlertCircle, Trash2 } from 'lucide-react';
 import PizZip from 'pizzip';
 import Docxtemplater from 'docxtemplater';
 import { saveAs } from 'file-saver';
@@ -47,6 +47,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
   baseClusterTariff,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isResetConfirmOpen, setIsResetConfirmOpen] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -74,16 +75,6 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
   });
 
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
-
-  const handlePrint = () => {
-    try {
-      window.focus();
-      window.print();
-    } catch (e) {
-      console.error("Print error, fallback to direct print:", e);
-      window.print();
-    }
-  };
 
   const handleGenerateDocx = async () => {
     // Validate critical fields
@@ -195,6 +186,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
         // Form textual strings
         mojri_name: contractForm.mojri_name,
         center_name: contractForm.center_name,
+        khoshe: selectedClusterName,
         level: levelOutput !== "" ? formatToFarsi(levelOutput) : "",
         boss_name: contractForm.boss_name,
         mojri_rep: contractForm.mojri_rep,
@@ -231,7 +223,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
         exam_fee_per_person: formatToFarsi(examFeePerPerson),
         total_exam_fee: formatToFarsi(totalExamFee),
         total_cert_fee: formatToFarsi(totalCertFee),
-        total_days: formatToFarsi(parseFloat(totalDays.toFixed(2))),
+        total_days: formatToFarsi(totalDays),
         cost_per_person_day: formatToFarsi(costPerPersonDay),
         total_course_amount: formatToFarsi(totalCourseAmount),
         contract_total_amount: formatToFarsi(contractTotalAmount),
@@ -256,7 +248,23 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
         mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
       });
       
-      saveAs(out, 'gharardad-tvto.docx');
+      const center = contractForm.center_name?.trim() || "";
+      const mojri = contractForm.mojri_name?.trim() || "";
+      const course = contractForm.course_name?.trim() || "";
+
+      // Combine available parts with a dash
+      const rawFileName = [center, mojri, course].filter(Boolean).join(" - ");
+
+      // Sanitize illegal characters for Windows filenames
+      let safeFileName = rawFileName.replace(/[\/\\?%*:|"<>]/g, '-').trim();
+
+      // Apply Fallback if empty
+      if (!safeFileName) {
+        safeFileName = "قرارداد آموزشی";
+      }
+
+      const finalFileName = `${safeFileName}.docx`;
+      saveAs(out, finalFileName);
       setIsModalOpen(false); // successfully built & closes modal
     } catch (error: any) {
       console.error(error);
@@ -295,15 +303,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
           </button>
           <button
             type="button"
-            onClick={handlePrint}
-            className="flex items-center gap-1 px-2.5 py-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg font-bold text-xs transition-all cursor-pointer"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            نسخه چاپی
-          </button>
-          <button
-            type="button"
-            onClick={onReset}
+            onClick={() => setIsResetConfirmOpen(true)}
             className="flex items-center gap-1 px-2.5 py-1.5 bg-red-600 text-white hover:bg-red-700 rounded-lg font-bold text-xs transition-all cursor-pointer shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0"
           >
             <Trash2 className="w-3.5 h-3.5" />
@@ -336,7 +336,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
         <div className="space-y-1">
           <span className="text-slate-400 block font-medium">تعداد روز برگزاری دوره:</span>
           <span className="font-black text-slate-900 text-[13px]">
-            {dailyHours > 0 && standardHours > 0 ? `${formatDecimal(totalDays, 2)} روز` : '۰ روز'}
+            {dailyHours > 0 && standardHours > 0 ? `${toPersianDigits(totalDays)} روز` : '۰ روز'}
           </span>
         </div>
       </div>
@@ -724,6 +724,45 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      {isResetConfirmOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4" dir="rtl">
+          <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl relative border border-slate-200 flex flex-col gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-2.5 bg-red-50 text-red-600 rounded-lg shrink-0">
+                <AlertCircle className="w-6 h-6 animate-bounce" />
+              </div>
+              <div className="space-y-1.5">
+                <h3 className="text-sm font-extrabold text-slate-800">پاک کردن همه مقادیر</h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  با این کار کلیه اطلاعات درج شده قرارداد جاری پاک خواهد شد. آیا مطمئن هستید؟
+                </p>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2.5 mt-2">
+              <button
+                type="button"
+                onClick={() => setIsResetConfirmOpen(false)}
+                className="px-4 py-2 border border-slate-250 hover:bg-slate-50 rounded-lg text-slate-600 font-bold text-xs transition-all cursor-pointer"
+              >
+                برگشت
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  onReset();
+                  setIsResetConfirmOpen(false);
+                }}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-all cursor-pointer shadow-sm"
+              >
+                بله، پاک شود
+              </button>
+            </div>
           </div>
         </div>
       )}

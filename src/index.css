@@ -12,3 +12,24 @@ body {
   direction: rtl;
 }
 
+/* Robust fallback styles for buttons on legacy browsers to ensure safe flex-alignments */
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-rendering: auto;
+}
+
+/* Ensure proper vertical alignment and cursor interaction for native controls */
+input, select, textarea, button {
+  font-family: inherit;
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+

@@ -46,8 +46,8 @@ export default function App() {
   const baseClusterTariff = currentCluster ? currentCluster.tariff : 0;
   const baseHourlyRate = currentCluster ? currentCluster.baseHourlyRate : 0;
 
-  // Compute precise TotalDays up to 2 decimal places
-  const totalDays = dailyHours > 0 ? parseFloat((standardHours / dailyHours).toFixed(2)) : 0;
+  // Compute precise TotalDays, rounding up to the nearest integer
+  const totalDays = dailyHours > 0 ? Math.ceil(standardHours / dailyHours) : 0;
 
   // Weight validation
   const totalWeightSum = TABLE_1_ROWS.reduce((sum, row) => {

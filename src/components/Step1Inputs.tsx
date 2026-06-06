@@ -73,8 +73,8 @@ export const Step1Inputs: React.FC<Step1InputsProps> = ({
     }
   };
 
-  // Determine total days
-  const totalDays = dailyHours > 0 ? standardHours / dailyHours : 0;
+  // Determine total days (rounded up to nearest integer)
+  const totalDays = dailyHours > 0 ? Math.ceil(standardHours / dailyHours) : 0;
 
   // Preset hours for quick convenience
   const hourPresets = [40, 80, 120, 200, 300];
@@ -213,7 +213,7 @@ export const Step1Inputs: React.FC<Step1InputsProps> = ({
           </div>
           <div className="text-left">
             <span className="text-lg font-extrabold text-blue-900 font-sans">
-              {formatDecimal(totalDays, 2)} <span className="text-xs font-normal text-slate-550 mr-0.5">روز</span>
+              {toPersianDigits(totalDays)} <span className="text-xs font-normal text-slate-550 mr-0.5">روز</span>
             </span>
           </div>
         </div>
