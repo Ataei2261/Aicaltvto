@@ -76,6 +76,42 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
 
   const [validationErrors, setValidationErrors] = useState<Record<string, boolean>>({});
 
+  // Decoupled tiered cost calculation helpers
+  const toEnglishDigitsComponent = (str: string): string => {
+    const persianDigits = [/۰/g, /۱/g, /۲/g, /۳/g, /۴/g, /۵/g, /۶/g, /۷/g, /٨/g, /۹/g];
+    const arabicDigits = [/٠/g, /١/g, /٢/g, /٣/g, /٤/g, /٥/g, /٦/g, /٧/g, /٨/g, /٩/g];
+    let res = (str || '').replace(/٫/g, '.');
+    for (let i = 0; i < 10; i++) {
+      res = res.replace(persianDigits[i], i.toString()).replace(arabicDigits[i], i.toString());
+    }
+    return res;
+  };
+
+  const getDahakMultiplier = (hours: number): number => {
+    if (hours <= 100) {
+      return hours;
+    } else if (hours <= 200) {
+      return 100 + (hours - 100) * 0.5;
+    } else if (hours <= 300) {
+      return 150 + (hours - 200) * 0.25;
+    } else {
+      return 175 + (hours - 300) * 0.15;
+    }
+  };
+
+  let componentBaseHourlyCost = 0;
+  if (selectedClusterName.includes("صنعت و کشاورزی")) {
+    componentBaseHourlyCost = 145000;
+  } else if (selectedClusterName.includes("خدمات")) {
+    componentBaseHourlyCost = 120000;
+  } else if (selectedClusterName.includes("فرهنگ و هنر")) {
+    componentBaseHourlyCost = 93750;
+  }
+
+  const liveDahakCount = Number(toEnglishDigitsComponent(contractForm.studentCountDahak)) || 0;
+  const liveTieredCostPerPerson = liveDahakCount > 0 ? (componentBaseHourlyCost * getDahakMultiplier(standardHours)) : 0;
+  const liveTotalTieredCost = liveTieredCostPerPerson * liveDahakCount;
+
   const handleGenerateDocx = async () => {
     // Validate critical fields
     const requiredFields = [
@@ -159,10 +195,10 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
       const consultFeePerPerson2 = consultFeePerPerson * count;
       const totalExamFee = examFeePerPerson * count;
 
-      // 5. Calculate total tiered cost if decile-based increase exists
-      const tieredIncrease = Number(totalTieredCost) || 0;
-      const countDahak = Number(toEnglishDigits(contractForm.studentCountDahak)) || 0;
-      const totalTieredCostValue = tieredIncrease * countDahak;
+      // 5. Calculate total tiered cost if decile-based increase exists (decoupled from initial decile state!)
+      const tieredIncrease = liveTieredCostPerPerson;
+      const countDahak = liveDahakCount;
+      const totalTieredCostValue = liveTotalTieredCost;
 
       // 6. Complete the strict contract grand total calculation
       const contractTotalAmount = 
@@ -620,6 +656,12 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                       placeholder="مثال: ۰"
                       className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-lg text-xs font-semibold text-slate-800 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 outline-none transition-all"
                     />
+                    {liveDahakCount > 0 && (
+                      <div className="text-[10px] text-blue-700 bg-blue-50 p-2 rounded-lg border border-blue-100 space-y-1 font-medium">
+                        <div>هزینه افزایشی هر نفر دهک بالای ۵: <span className="font-extrabold">{formatRial(liveTieredCostPerPerson)}</span></div>
+                        <div className="font-extrabold text-[#0284c7]">مجموع خدمات آموزشی دهک بالای ۵: {formatRial(liveTotalTieredCost)}</div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
