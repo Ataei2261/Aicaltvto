@@ -311,7 +311,35 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
   };
 
   const handleInputChange = (field: keyof typeof contractForm, value: string) => {
-    setContractForm(prev => ({ ...prev, [field]: value }));
+    let cleanValue = value;
+    if (field === 'student_count' || field === 'course_count') {
+      // First convert Persian/Arabic digits to English digits
+      cleanValue = toEnglishDigitsComponent(value);
+      // Strip anything that is not a digit
+      cleanValue = cleanValue.replace(/\D/g, '');
+      
+      // Enforce positive minimum bound (cannot be zero or negative)
+      // Accept empty input temporarily so user can erase to type again, but if they enter "0" make it "1" or strip leading zeros.
+      if (cleanValue.startsWith('0')) {
+        cleanValue = cleanValue.replace(/^0+/, '');
+        if (cleanValue === '') {
+          cleanValue = '1';
+        }
+      }
+    } else if (field === 'studentCountDahak') {
+      // For dahak count, we allow '0' but still only digits are allowed.
+      cleanValue = toEnglishDigitsComponent(value);
+      cleanValue = cleanValue.replace(/\D/g, '');
+      // Strip leading zeros unless it's just '0'
+      if (cleanValue.length > 1 && cleanValue.startsWith('0')) {
+        cleanValue = cleanValue.replace(/^0+/, '');
+        if (cleanValue === '') {
+          cleanValue = '0';
+        }
+      }
+    }
+
+    setContractForm(prev => ({ ...prev, [field]: cleanValue }));
     if (validationErrors[field]) {
       setValidationErrors(prev => ({ ...prev, [field]: false }));
     }
@@ -602,6 +630,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                     <label className="text-xs font-bold text-slate-600">تعداد دفعات اجرای دوره</label>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={contractForm.course_count}
                       onChange={(e) => handleInputChange('course_count', e.target.value)}
                       placeholder="مثال: ۱"
@@ -637,6 +666,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                     </label>
                     <input
                       type="text"
+                      inputMode="numeric"
                       value={contractForm.student_count}
                       onChange={(e) => handleInputChange('student_count', e.target.value)}
                       placeholder="مثال: ۱۵"
@@ -649,8 +679,8 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                       تعداد افراد دهک بالای ۵
                     </label>
                     <input
-                      type="number"
-                      min="0"
+                      type="text"
+                      inputMode="numeric"
                       value={contractForm.studentCountDahak}
                       onChange={(e) => handleInputChange('studentCountDahak', e.target.value)}
                       placeholder="مثال: ۰"
