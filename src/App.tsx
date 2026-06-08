@@ -142,7 +142,7 @@ export default function App() {
           {/* Institution Primary Branding Emblem - Clean White Circle */}
           <div className="relative z-10 bg-white rounded-full p-4 shadow-xl border border-white/20" id="logo-branding-badge">
             <img 
-              src="/logo.png"
+              src="https://i.postimg.cc/KjYTHSw4/download.png"
               alt="سازمان آموزش فنی و حرفه‌ای کشور"
               className="w-16 h-16 object-contain select-none" 
               referrerPolicy="no-referrer"
@@ -210,7 +210,7 @@ export default function App() {
           {/* TVTO Emblem Logo on the Left */}
           <div className="flex items-center gap-3 select-none" id="tvto-header-logo-container">
             <img 
-              src="/logo.png"
+              src="https://i.postimg.cc/KjYTHSw4/download.png"
               alt="سازمان آموزش فنی و حرفه‌ای کشور"
               className="w-12 h-12 md:w-14 md:h-14 bg-white p-1 rounded-xl shadow-md border border-slate-700/10 object-contain" 
               referrerPolicy="no-referrer"
