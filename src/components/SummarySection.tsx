@@ -47,6 +47,8 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
   baseClusterTariff,
 }) => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState<boolean>(false);
+  const [selectedDocumentType, setSelectedDocumentType] = useState<'certificate' | 'attendance' | null>(null);
   const [isResetConfirmOpen, setIsResetConfirmOpen] = useState<boolean>(false);
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -143,9 +145,10 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
     setErrorMsg(null);
 
     try {
-      const response = await fetch('/template.docx');
+      const templatePath = selectedDocumentType === 'attendance' ? '/template1.docx' : '/template.docx';
+      const response = await fetch(templatePath);
       if (!response.ok) {
-        throw new Error('فایل قالب قرارداد (template.docx) پیدا نشد. لطفا مطمئن شوید این فایل در پوشه public قرار دارد.');
+        throw new Error(`فایل قالب قرارداد (${templatePath}) پیدا نشد. لطفا مطمئن شوید این فایل در پوشه public قرار دارد.`);
       }
       const arrayBuffer = await response.arrayBuffer();
 
@@ -213,6 +216,12 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
       const totalRegConsultAll = totalRegConsultPerPerson * parsedStudentCount;
       const totalCertFee = certificateIssuanceCost * parsedStudentCount;
 
+      // Phase 3 calculations (Certificate of Attendance alternative flow)
+      const taeed_fee = 220000 * parsedStudentCount;
+      const mohtava_total = 1200000 * parsedStudentCount;
+      const total_course_amount1 = totalCourseAmount + mohtava_total;
+      const contract_total_amountb = total_course_amount1 + regFeePerPerson2 + consultFeePerPerson2 + taeed_fee + totalTieredCostValue;
+
       let levelOutput = "";
       if (contractForm.level && contractForm.level.trim() !== "") {
         levelOutput = `مرحله ${contractForm.level}`;
@@ -268,6 +277,12 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
         base_tariff: formatToFarsi(baseTariffVal),
         table1_total: formatToFarsi(sumOfRowCosts),
         table2_total: formatToFarsi(grandTotal),
+
+        // Added conditional variables for Attendance Certificate template (Phase 3)
+        taeed_fee: formatToFarsi(taeed_fee),
+        mohtava_total: formatToFarsi(mohtava_total),
+        total_course_amount1: formatToFarsi(total_course_amount1),
+        contract_total_amountb: formatToFarsi(contract_total_amountb),
       };
 
       calculatedTable1Rows.forEach((row, index) => {
@@ -358,7 +373,7 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
             type="button"
             onClick={() => {
               setErrorMsg(null);
-              setIsModalOpen(true);
+              setIsBranchModalOpen(true);
             }}
             className="flex items-center gap-1.5 px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs transition-all cursor-pointer shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0"
           >
@@ -460,7 +475,12 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
             <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-6 shrink-0">
               <div className="flex items-center gap-2">
                 <FileSignature className="w-5 h-5 text-blue-600" />
-                <h2 className="text-lg font-bold text-slate-800">اطلاعات تکمیلی جهت صدور قرارداد</h2>
+                <h2 className="text-lg font-bold text-slate-800 flex flex-wrap items-center gap-1.5">
+                  <span>اطلاعات تکمیلی جهت صدور قرارداد</span>
+                  <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded-lg text-xs font-black border border-blue-100/80">
+                    {selectedDocumentType === 'certificate' ? 'ـ منجر به صدور گواهینامه' : 'ـ منجر به صدور گواهی حضور'}
+                  </span>
+                </h2>
               </div>
               <button
                 type="button"
@@ -796,6 +816,88 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
               </button>
             </div>
 
+          </div>
+        </div>
+      )}
+
+      {/* Branch Selection Modal */}
+      {isBranchModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" dir="rtl">
+          <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl relative border border-slate-200 flex flex-col gap-5 animate-scale-up">
+            {/* Header / X Close */}
+            <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-1">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <h2 className="text-sm font-black text-slate-800">مشخص کردن نوع مدرک دوره</h2>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsBranchModalOpen(false)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Content / Question */}
+            <div className="space-y-2 text-center py-1">
+              <h3 className="text-sm font-extrabold text-slate-800 leading-relaxed text-right md:text-center">
+                این دوره منجر به صدور کدام مدرک میشود؟
+              </h3>
+              <p className="text-[11px] text-slate-500 leading-relaxed text-right md:text-center">
+                جهت بارگذاری قالب صحیحِ تفاهم‌نامه تایید شده و تزریق محاسبات مالی متناسب، لطفاً نوع گواهینامه خروجی را مشخص نمایید:
+              </p>
+            </div>
+
+            {/* Selection Buttons */}
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDocumentType('certificate');
+                  setIsBranchModalOpen(false);
+                  setIsModalOpen(true);
+                }}
+                className="w-full flex items-center gap-3 p-4 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition-all cursor-pointer text-right group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center group-hover:bg-blue-200 shrink-0 transition-colors">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-xs text-slate-800 group-hover:text-blue-850">گواهی‌نامه</div>
+                  <div className="text-[9px] text-slate-500">مسیر پیش‌فرض و استفاده از قالب استاندارد تفاهم‌نامه</div>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedDocumentType('attendance');
+                  setIsBranchModalOpen(false);
+                  setIsModalOpen(true);
+                }}
+                className="w-full flex items-center gap-3 p-4 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl transition-all cursor-pointer text-right group"
+              >
+                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:bg-emerald-200 shrink-0 transition-colors">
+                  <CheckCircle className="w-4 h-4" />
+                </div>
+                <div className="space-y-0.5">
+                  <div className="font-extrabold text-xs text-slate-800 group-hover:text-emerald-850">گواهی حضور</div>
+                  <div className="text-[9px] text-slate-500">مسیر تفاهم‌نامه موازی به همراه محاسبه هزینه‌های تأیید و محتوا</div>
+                </div>
+              </button>
+            </div>
+
+            {/* Footer */}
+            <div className="flex justify-end gap-2.5 pt-1.5 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setIsBranchModalOpen(false)}
+                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-600 font-bold text-xs transition-all cursor-pointer"
+              >
+                انصراف
+              </button>
+            </div>
           </div>
         </div>
       )}
