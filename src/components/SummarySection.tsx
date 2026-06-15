@@ -823,34 +823,26 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
       {/* Branch Selection Modal */}
       {isBranchModalOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in" dir="rtl">
-          <div className="bg-white rounded-xl w-full max-w-md p-6 shadow-2xl relative border border-slate-200 flex flex-col gap-5 animate-scale-up">
-            {/* Header / X Close */}
-            <div className="flex justify-between items-center pb-3 border-b border-slate-100 mb-1">
-              <div className="flex items-center gap-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <h2 className="text-sm font-black text-slate-800">مشخص کردن نوع مدرک دوره</h2>
-              </div>
-              <button
-                type="button"
-                onClick={() => setIsBranchModalOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100 transition-all cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
+          <div className="bg-white rounded-xl w-full max-w-xs p-5 shadow-25 relative border border-slate-200 flex flex-col gap-4 animate-scale-up">
+            {/* X Close Button in top left corner (RTL top left) */}
+            <button
+              type="button"
+              onClick={() => setIsBranchModalOpen(false)}
+              className="absolute top-3 left-3 text-slate-400 hover:text-slate-600 p-1 rounded-md hover:bg-slate-50 transition-all cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
 
-            {/* Content / Question */}
-            <div className="space-y-2 text-center py-1">
-              <h3 className="text-sm font-extrabold text-slate-800 leading-relaxed text-right md:text-center">
+            {/* Content / Question / Only Text Allowed */}
+            <div className="text-center pt-4 pb-2">
+              <h3 className="text-xs font-black text-slate-800 leading-relaxed">
                 این دوره منجر به صدور کدام مدرک میشود؟
               </h3>
-              <p className="text-[11px] text-slate-500 leading-relaxed text-right md:text-center">
-                جهت بارگذاری قالب صحیحِ تفاهم‌نامه تایید شده و تزریق محاسبات مالی متناسب، لطفاً نوع گواهینامه خروجی را مشخص نمایید:
-              </p>
             </div>
 
-            {/* Selection Buttons */}
-            <div className="flex flex-col gap-3">
+            {/* Selection Buttons in a row */}
+            <div className="flex gap-2">
+              {/* Right: Certificate */}
               <button
                 type="button"
                 onClick={() => {
@@ -858,17 +850,12 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                   setIsBranchModalOpen(false);
                   setIsModalOpen(true);
                 }}
-                className="w-full flex items-center gap-3 p-4 bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-300 rounded-xl transition-all cursor-pointer text-right group"
+                className="flex-1 py-2 px-3 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-700 rounded-lg text-xs font-extrabold transition-all cursor-pointer text-center"
               >
-                <div className="w-8 h-8 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center group-hover:bg-blue-200 shrink-0 transition-colors">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5">
-                  <div className="font-extrabold text-xs text-slate-800 group-hover:text-blue-850">گواهی‌نامه</div>
-                  <div className="text-[9px] text-slate-500">مسیر پیش‌فرض و استفاده از قالب استاندارد تفاهم‌نامه</div>
-                </div>
+                گواهینامه
               </button>
 
+              {/* Left: Certificate of Attendance */}
               <button
                 type="button"
                 onClick={() => {
@@ -876,24 +863,18 @@ export const SummarySection: React.FC<SummarySectionProps> = ({
                   setIsBranchModalOpen(false);
                   setIsModalOpen(true);
                 }}
-                className="w-full flex items-center gap-3 p-4 bg-slate-50 hover:bg-emerald-50 border border-slate-200 hover:border-emerald-300 rounded-xl transition-all cursor-pointer text-right group"
+                className="flex-1 py-2 px-3 bg-white hover:bg-slate-50 active:bg-slate-100 border border-slate-200 hover:border-slate-300 text-slate-700 rounded-lg text-xs font-extrabold transition-all cursor-pointer text-center"
               >
-                <div className="w-8 h-8 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center group-hover:bg-emerald-200 shrink-0 transition-colors">
-                  <CheckCircle className="w-4 h-4" />
-                </div>
-                <div className="space-y-0.5">
-                  <div className="font-extrabold text-xs text-slate-800 group-hover:text-emerald-850">گواهی حضور</div>
-                  <div className="text-[9px] text-slate-500">مسیر تفاهم‌نامه موازی به همراه محاسبه هزینه‌های تأیید و محتوا</div>
-                </div>
+                تائیدیه حضور
               </button>
             </div>
 
-            {/* Footer */}
-            <div className="flex justify-end gap-2.5 pt-1.5 border-t border-slate-100">
+            {/* Compact footer with simple cancel */}
+            <div className="flex justify-center border-t border-slate-100 pt-3">
               <button
                 type="button"
                 onClick={() => setIsBranchModalOpen(false)}
-                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-lg text-slate-600 font-bold text-xs transition-all cursor-pointer"
+                className="text-[10px] font-bold text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
               >
                 انصراف
               </button>
