@@ -9,6 +9,21 @@ body {
   direction: rtl;
 }
 
+@keyframes white-pulse-blink {
+  0%, 100% {
+    opacity: 1;
+    background-color: #ffffff;
+  }
+  50% {
+    opacity: 0.3;
+    background-color: #f8fafc;
+  }
+}
+
+.animate-white-blink {
+  animation: white-pulse-blink 1.2s ease-in-out infinite;
+}
+
 /* Robust fallback styles for buttons on legacy browsers to ensure safe flex-alignments */
 button {
   display: inline-flex;

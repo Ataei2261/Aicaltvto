@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { CLUSTERS, TABLE_1_ROWS, DECILES, REGISTRATION_EXAM_COST, CERTIFICATE_ISSUANCE_COST } from './data';
 import { ClusterType, DecileType, Table1RowState } from './types';
 import { Step1Inputs } from './components/Step1Inputs';
@@ -12,7 +12,48 @@ import { SummarySection } from './components/SummarySection';
 import { toPersianDigits, formatRial } from './utils/numberUtils';
 import { Calculator, Phone } from 'lucide-react';
 
+// =========================================================================
+// کلید اصلی غیرفعال‌سازی موقت برنامه (Master Kill-Switch)
+// برای فعال‌سازی مجدد برنامه کافیست مقدار زیر را برابر false قرار دهید.
+// =========================================================================
+const IS_APP_DISABLED = true;
+
 export default function App() {
+  // اگر برنامه موقتاً غیرفعال باشد، کلیدهای دسترسی به Inspect و کلیک راست غیرفعال می‌شوند
+  useEffect(() => {
+    if (IS_APP_DISABLED) {
+      const handleContextMenu = (e: MouseEvent) => e.preventDefault();
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (
+          e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
+          (e.ctrlKey && ['u', 'U', 's', 'S', 'p', 'P'].includes(e.key))
+        ) {
+          e.preventDefault();
+        }
+      };
+
+      document.addEventListener('contextmenu', handleContextMenu);
+      document.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.removeEventListener('contextmenu', handleContextMenu);
+        document.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, []);
+
+  // در حالت غیرفعال بودن: صرفاً یک صفحه سفید چشمک‌زن لود می‌شود و هیچ کامپوننتی در DOM قرار نمی‌گیرد
+  if (IS_APP_DISABLED) {
+    return (
+      <div 
+        className="fixed inset-0 w-screen h-screen bg-white select-none overflow-hidden cursor-default z-[9999999] pointer-events-auto"
+        style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+      >
+        <div className="w-full h-full animate-white-blink" />
+      </div>
+    );
+  }
+
   // 1. Initial State Definitions
   const [hasEntered, setHasEntered] = useState<boolean>(false);
   const [selectedClusterId, setSelectedClusterId] = useState<ClusterType | null>(null);
