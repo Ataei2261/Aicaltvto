@@ -3,59 +3,39 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, FormEvent } from 'react';
 import { CLUSTERS, TABLE_1_ROWS, DECILES, REGISTRATION_EXAM_COST, CERTIFICATE_ISSUANCE_COST } from './data';
 import { ClusterType, DecileType, Table1RowState } from './types';
 import { Step1Inputs } from './components/Step1Inputs';
 import { Table1Section } from './components/Table1Section';
 import { SummarySection } from './components/SummarySection';
-import { toPersianDigits, formatRial } from './utils/numberUtils';
-import { Calculator, Phone } from 'lucide-react';
+import { toPersianDigits, toEnglishDigits, formatRial } from './utils/numberUtils';
+import { Calculator, Phone, Lock, Eye, EyeOff, AlertCircle } from 'lucide-react';
 
-// =========================================================================
-// کلید اصلی غیرفعال‌سازی موقت برنامه (Master Kill-Switch)
-// برای فعال‌سازی مجدد برنامه کافیست مقدار زیر را برابر false قرار دهید.
-// =========================================================================
-const IS_APP_DISABLED = true;
+// SHA-256 Hash of the authorized access code
+const ACCESS_CODE_HASH = 'db3b847781bbcc444fd0a82dda7aa1334859828b459215e82b62e7f19f18c25f';
+const SESSION_AUTH_KEY = 'tvto_auth_verified_v1';
+
+async function sha256Hex(message: string): Promise<string> {
+  const msgBuffer = new TextEncoder().encode(message);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
+}
 
 export default function App() {
-  // اگر برنامه موقتاً غیرفعال باشد، کلیدهای دسترسی به Inspect و کلیک راست غیرفعال می‌شوند
-  useEffect(() => {
-    if (IS_APP_DISABLED) {
-      const handleContextMenu = (e: MouseEvent) => e.preventDefault();
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (
-          e.key === 'F12' ||
-          (e.ctrlKey && e.shiftKey && ['I', 'i', 'J', 'j', 'C', 'c'].includes(e.key)) ||
-          (e.ctrlKey && ['u', 'U', 's', 'S', 'p', 'P'].includes(e.key))
-        ) {
-          e.preventDefault();
-        }
-      };
-
-      document.addEventListener('contextmenu', handleContextMenu);
-      document.addEventListener('keydown', handleKeyDown);
-      return () => {
-        document.removeEventListener('contextmenu', handleContextMenu);
-        document.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-  }, []);
-
-  // در حالت غیرفعال بودن: صرفاً یک صفحه سفید چشمک‌زن لود می‌شود و هیچ کامپوننتی در DOM قرار نمی‌گیرد
-  if (IS_APP_DISABLED) {
-    return (
-      <div 
-        className="fixed inset-0 w-screen h-screen bg-white select-none overflow-hidden cursor-default z-[9999999] pointer-events-auto"
-        style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
-      >
-        <div className="w-full h-full animate-white-blink" />
-      </div>
-    );
-  }
 
   // 1. Initial State Definitions
-  const [hasEntered, setHasEntered] = useState<boolean>(false);
+  const [hasEntered, setHasEntered] = useState<boolean>(() => {
+    try {
+      return sessionStorage.getItem(SESSION_AUTH_KEY) === ACCESS_CODE_HASH;
+    } catch {
+      return false;
+    }
+  });
+  const [passwordInput, setPasswordInput] = useState<string>('');
+  const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [authError, setAuthError] = useState<string | null>(null);
   const [selectedClusterId, setSelectedClusterId] = useState<ClusterType | null>(null);
   const [standardHours, setStandardHours] = useState<number>(0);
   const [dailyHours, setDailyHours] = useState<number>(0);
@@ -168,6 +148,28 @@ export default function App() {
     });
   };
 
+  const handleLoginVerify = async (e: FormEvent) => {
+    e.preventDefault();
+    const normalizedPassword = toEnglishDigits(passwordInput.trim());
+    if (!normalizedPassword) {
+      setAuthError('لطفاً رمز ورود به سامانه را وارد نمایید.');
+      return;
+    }
+
+    const inputHash = await sha256Hex(normalizedPassword);
+    if (inputHash === ACCESS_CODE_HASH) {
+      try {
+        sessionStorage.setItem(SESSION_AUTH_KEY, ACCESS_CODE_HASH);
+      } catch {
+        // Ignore sessionStorage errors in restricted environments
+      }
+      setAuthError(null);
+      setHasEntered(true);
+    } else {
+      setAuthError('رمز وارد شده صحیح نمی‌باشد.');
+    }
+  };
+
   if (!hasEntered) {
     return (
       <div className="min-h-screen bg-[#0b0f19] flex items-center justify-center p-4 md:p-6 font-sans antialiased text-slate-100" id="welcome-screen" dir="rtl">
@@ -200,17 +202,49 @@ export default function App() {
             </h2>
           </div>
 
-          {/* Action Section: Centered CTA Proceed Button */}
-          <div className="w-full relative z-10 pt-2">
+          {/* Action Section: Password Protected Login Form */}
+          <form onSubmit={handleLoginVerify} className="w-full max-w-md relative z-10 pt-2 space-y-4">
+            <div className="relative">
+              <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none text-slate-400">
+                <Lock className="w-5 h-5 text-blue-400" />
+              </div>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={passwordInput}
+                onChange={(e) => {
+                  setPasswordInput(e.target.value);
+                  if (authError) setAuthError(null);
+                }}
+                placeholder="رمز عبور را وارد کنید..."
+                dir="ltr"
+                autoFocus
+                className="w-full py-3.5 pr-12 pl-12 bg-slate-900/70 border border-white/15 focus:border-blue-400 focus:ring-2 focus:ring-blue-500/20 rounded-2xl text-white placeholder:text-slate-500 placeholder:text-right text-center font-mono text-base tracking-widest outline-none transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400 hover:text-slate-200 transition-colors cursor-pointer"
+                tabIndex={-1}
+              >
+                {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              </button>
+            </div>
+
+            {authError && (
+              <div className="flex items-center justify-center gap-2 text-rose-400 bg-rose-500/10 border border-rose-500/20 rounded-xl py-2.5 px-4 text-xs font-bold">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
             <button
-              type="button"
-              onClick={() => setHasEntered(true)}
+              type="submit"
               className="w-full py-4 px-10 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-extrabold text-base rounded-2xl shadow-lg hover:shadow-xl hover:shadow-blue-500/20 transition-all hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] cursor-pointer"
               id="btn-welcome-enter"
             >
               ورود به سامانه
             </button>
-          </div>
+          </form>
 
           {/* Strictly Aligned Footer Section with Pipe Separators */}
           <div className="w-full border-t border-white/10 pt-6 mt-4 text-[11px] sm:text-xs text-slate-400 leading-relaxed space-y-2 relative z-10" id="welcome-footer">
